@@ -41,23 +41,31 @@
         Avoid the thorny roses that appear. Get 1000 affection to win! You have 3 lives ❤️.
     </div>
 <script>
-    const config = {
-        type: Phaser.AUTO,
+
+     const config = {
+      type: Phaser.AUTO,
+      width: 800,
+      height: 600,
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 800,
-        height: 600,
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 300 },
-                debug: false
-            }
-        },
-        scene: {
-            preload: preload,
-            create: create,
-            update: update
+        height: 600
+      },
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 300 },
+          debug: false
         }
+      },
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
     };
+
 
     const game = new Phaser.Game(config);
 
@@ -183,29 +191,54 @@
             .setOrigin(0.5);
     }
 
-    function update() {
-        if (gameOver) return;
+function update() {
+  if (gameOver) return;
 
-        if (cursors.left.isDown) {
-            player.setVelocityX(-160);
-            player.anims.play('left', true);
-        } else if (cursors.right.isDown) {
-            player.setVelocityX(160);
-            player.anims.play('right', true);
-        } else {
-            player.setVelocityX(0);
-            player.anims.play('turn');
-        }
+  // Keyboard controls (desktop)
+  if (cursors.left.isDown) {
+    player.setVelocityX(-160);
+    player.anims.play('left', true);
+  } else if (cursors.right.isDown) {
+    player.setVelocityX(160);
+    player.anims.play('right', true);
+  } else {
+    player.setVelocityX(0);
+    player.anims.play('turn');
+  }
 
-        if (cursors.up.isDown && player.body.touching.down) {
-            player.setVelocityY(-330);
-        }
+  if (cursors.up.isDown && player.body.touching.down) {
+    player.setVelocityY(-330);
+  }
 
-        // Game over if player falls off the world
-        if (player.y > 600) {
-            hitBomb(player);
-        }
+  // Touch controls (mobile)
+  if (this.input.activePointer.isDown) {
+    const pointer = this.input.activePointer;
+    if (pointer.x < this.scale.width / 2) {
+      // Left half: move left
+      player.setVelocityX(-160);
+      player.anims.play('left', true);
+    } else {
+      // Right half: move right
+      player.setVelocityX(160);
+      player.anims.play('right', true);
     }
+    if (pointer.y < this.scale.height / 2 && player.body.touching.down) {
+      // Top half: jump
+      player.setVelocityY(-330);
+    }
+  } else {
+    if (!cursors.left.isDown && !cursors.right.isDown) {
+      player.setVelocityX(0);
+      player.anims.play('turn');
+    }
+  }
+
+  // Game over if player falls off the world
+  if (player.y > 600) {
+    hitBomb(player);
+  }
+}
+
 </script>
 
 </body>
