@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser 3 - Collect the Stars!</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <style>
+       body { 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); 
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas { 
+            border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+         #instructions {
+            text-align: center;
+            max-width: 800px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 18px;
+        }
+        h1 {
+            color: #ff69b4;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+  <h1>BBSSS</h1>
+    <div id="instructions">
+        Use arrow keys to move and jump! Collect pink hearts to fill the affection meter.
+        Avoid the thorny roses that appear. Get 1000 affection to win! You have 3 lives ❤️.
+    </div>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 300 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    const game = new Phaser.Game(config);
+
+    let player;
+    let stars;
+    let platforms;
+    let cursors;
+    let score = 0;
+    let scoreText;
+    let gameOver = false;
+
+    function preload() {
+        // Simple colored rectangles instead of images (no external assets needed)
+        this.load.image('sky', 'https://labs.phaser.io/assets/skies/space3.png');
+        this.load.image('ground', 'https://labs.phaser.io/assets/sprites/platform.png');
+        this.load.image('star', 'https://labs.phaser.io/assets/sprites/star.png');
+        this.load.image('bomb', 'https://labs.phaser.io/assets/sprites/bombmine.png');
+
+        // A cute dude (from Phaser examples)
+        this.load.spritesheet('dude',
+            'https://labs.phaser.io/assets/sprites/dude.png',
+            { frameWidth: 32, frameHeight: 48 }
+        );
+    }
+
+    function create() {
+        // Background
+        this.add.image(400, 300, 'sky');
+
+        // Platforms
+        platforms = this.physics.add.staticGroup();
+        platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        platforms.create(600, 400, 'ground');
+        platforms.create(50, 250, 'ground');
+        platforms.create(750, 220, 'ground');
+
+        // Player
+        player = this.physics.add.sprite(100, 450, 'dude');
+        player.setBounce(0.2);
+        player.setCollideWorldBounds(true);
+
+        // Player animations
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'turn',
+            frames: [{ key: 'dude', frame: 4 }],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        // Stars
+        stars = this.physics.add.group({
+            key: 'star',
+            repeat: 11,
+            setXY: { x: 12, y: 0, stepX: 70 }
+        });
+        stars.children.iterate(child => {
+            child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+        });
+
+        // Score
+        scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' });
+
+        // Colliders
+        this.physics.add.collider(player, platforms);
+        this.physics.add.collider(stars, platforms);
+        this.physics.add.overlap(player, stars, collectStar, null, this);
+
+        // Keyboard controls
+        cursors = this.input.keyboard.createCursorKeys();
+    }
+
+    function collectStar(player, star) {
+        star.disableBody(true, true);
+        score += 10;
+        scoreText.setText('Score: ' + score);
+
+        if (score >= 240) {
+          // Show winning message
+          this.add.text(400, 300, 'You Win!', { fontSize: '64px', fill: '#0f0' }).setOrigin(0.5);
+          // Stop game actions or pause physics
+          this.physics.pause();
+          gameOver = true; // to prevent further updates
+        }
+        // When all stars are collected, spawn more!
+        if (stars.countActive(true) === 0) {
+            stars.children.iterate(child => {
+                child.enableBody(true, child.x, 0, true, true);
+            });
+
+            // Spawn a bomb for extra challenge!
+            let bomb = this.physics.add.sprite(Phaser.Math.Between(0, 800), 0, 'bomb');
+            bomb.setDisplaySize(30, 30);  // width x height in pixels
+            bomb.refreshBody();
+            bomb.setBounce(1);
+            bomb.setCollideWorldBounds(true);
+            bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            this.physics.add.collider(bomb, platforms);
+            this.physics.add.collider(player, bomb, hitBomb, null, this);
+        }
+    }
+
+    function hitBomb(player, bomb) {
+        this.physics.pause();
+        player.setTint(0xff0000);
+        player.anims.play('turn');
+        gameOver = true;
+
+        this.add.text(200, 250, 'GAME OVER', { fontSize: '60px', fill: '#ff0000' })
+            .setOrigin(0.5);
+
+        this.add.text(400, 320, 'Refresh to play again', { fontSize: '24px', fill: '#FFF' })
+            .setOrigin(0.5);
+    }
+
+    function update() {
+        if (gameOver) return;
+
+        if (cursors.left.isDown) {
+            player.setVelocityX(-160);
+            player.anims.play('left', true);
+        } else if (cursors.right.isDown) {
+            player.setVelocityX(160);
+            player.anims.play('right', true);
+        } else {
+            player.setVelocityX(0);
+            player.anims.play('turn');
+        }
+
+        if (cursors.up.isDown && player.body.touching.down) {
+            player.setVelocityY(-330);
+        }
+
+        // Game over if player falls off the world
+        if (player.y > 600) {
+            hitBomb(player);
+        }
+    }
+</script>
+
+</body>
+</html>
