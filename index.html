@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phaser 3 - Collect the Stars!</title>
+    <title>Happy Bday Bonda!</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <style>
        body { 
@@ -23,7 +23,7 @@
          #instructions {
             text-align: center;
             max-width: 800px;
-            color: #fff;
+            color: #6A1B9A;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             font-size: 18px;
         }
@@ -35,10 +35,13 @@
     </style>
 </head>
 <body>
-  <h1>BBSSS</h1>
+  <h1>💝Happy Birhday, Bonda!💝</h1>
     <div id="instructions">
-        Use arrow keys to move and jump! Collect pink hearts to fill the affection meter.
-        Avoid the thorny roses that appear. Get 1000 affection to win! You have 3 lives ❤️.
+        Help me gather all the sparkling stars ✨ to light up our love!
+        But watch out for those sneaky bombs 💣 trying to dim our shine.
+        Tap to jump, and swipe to move perfect for mobile!
+        Collect as many stars as you can and complete your 24!  
+        <em>Just a tiny gift from my heart to yours… No matter the score, you always shine the brightest to your Sunshine. 💖😘</em>
     </div>
 <script>
 
@@ -151,14 +154,18 @@
     function collectStar(player, star) {
         star.disableBody(true, true);
         score += 10;
-        scoreText.setText('Score: ' + score);
+        scoreText.setText('Score: ' + score/10);
 
         if (score >= 240) {
           // Show winning message
-          this.add.text(400, 300, 'You Win!', { fontSize: '64px', fill: '#0f0' }).setOrigin(0.5);
+          this.add.text(400, 300, 'You Win My Heart Forever! ❤️💍\nAnd Please Wait... Don’t Refresh!', { fontSize: '42px', fill: '#ffd700',fontStyle: 'bold' }).setOrigin(0.5);
+        
           // Stop game actions or pause physics
           this.physics.pause();
           gameOver = true; // to prevent further updates
+         setTimeout(() => {
+            window.location.href = "wishes.html";
+        }, 5000);
         }
         // When all stars are collected, spawn more!
         if (stars.countActive(true) === 0) {
@@ -184,10 +191,10 @@
         player.anims.play('turn');
         gameOver = true;
 
-        this.add.text(200, 250, 'GAME OVER', { fontSize: '60px', fill: '#ff0000' })
+        this.add.text(400, 250, 'Oops! Hearts Broken... 😢', { fontSize: '48px', fill: '#ff69b4' })
             .setOrigin(0.5);
 
-        this.add.text(400, 320, 'Refresh to play again', { fontSize: '24px', fill: '#FFF' })
+        this.add.text(400, 320, 'Refresh for another try 💕', { fontSize: '24px', fill: '#FFF' })
             .setOrigin(0.5);
     }
 
